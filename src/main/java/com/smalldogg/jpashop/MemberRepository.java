@@ -1,5 +1,6 @@
 package com.smalldogg.jpashop;
 
+import com.smalldogg.jpashop.domain.Member;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
