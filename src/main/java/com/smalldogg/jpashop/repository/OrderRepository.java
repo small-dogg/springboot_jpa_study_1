@@ -41,7 +41,7 @@ public class OrderRepository {
 
     if (orderSearch.getOrderStatus() != null) {
       if (isFirstCondition) {
-        jpql += "where";
+        jpql += " where";
         isFirstCondition = false;
       } else {
         jpql += " and";
@@ -51,7 +51,7 @@ public class OrderRepository {
 
     if (StringUtils.hasText(orderSearch.getMemberName())) {
       if (isFirstCondition) {
-        jpql += "where";
+        jpql += " where";
         isFirstCondition = false;
       } else {
         jpql += " and";

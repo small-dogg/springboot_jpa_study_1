@@ -6,12 +6,10 @@ import static javax.persistence.FetchType.LAZY;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -23,7 +21,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.aspectj.weaver.ast.Or;
 
 @Entity
 @Table(name = "orders")
@@ -51,7 +48,7 @@ public class Order {
   private LocalDateTime orderDate;
 
   @Enumerated(EnumType.STRING)
-  private OrderStatus orderStatus;
+  private OrderStatus status;
 
   //==연관관계 메서드==//
   public void setMember(Member member){
@@ -79,7 +76,7 @@ public class Order {
     for (OrderItem orderItem : orderItems) {
       order.addOrderItem(orderItem);
     }
-    order.setOrderStatus(OrderStatus.ORDER);
+    order.setStatus(OrderStatus.ORDER);
     order.setOrderDate(LocalDateTime.now());
     return order;
   }
@@ -94,7 +91,7 @@ public class Order {
       throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가능합니다.");
     }
 
-    this.setOrderStatus(OrderStatus.CANCEL);
+    this.setStatus(OrderStatus.CANCEL);
     for (OrderItem orderItem : orderItems) {
       orderItem.cancel();
     }
