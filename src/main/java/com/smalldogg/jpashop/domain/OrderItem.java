@@ -2,6 +2,7 @@ package com.smalldogg.jpashop.domain;
 
 import static javax.persistence.FetchType.LAZY;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smalldogg.jpashop.domain.item.Item;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,6 +30,7 @@ public class OrderItem {
   @JoinColumn(name = "item_id")
   private Item item;
 
+  @JsonIgnore
   @ManyToOne(fetch= LAZY)
   @JoinColumn(name = "order_id")
   private Order order;
