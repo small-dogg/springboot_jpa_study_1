@@ -11,6 +11,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.validation.constraints.NotEmpty;
+
 import lombok.Setter;
 import lombok.Getter;
 
@@ -22,6 +24,7 @@ public class Member {
   @Column(name="member_id")
   private long id;
 
+  @NotEmpty
   private String name;
 
   @Embedded
