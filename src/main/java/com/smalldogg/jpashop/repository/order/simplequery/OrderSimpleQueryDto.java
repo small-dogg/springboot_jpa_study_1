@@ -1,4 +1,4 @@
-package com.smalldogg.jpashop.repository;
+package com.smalldogg.jpashop.repository.order.simplequery;
 
 import com.smalldogg.jpashop.domain.Address;
 import com.smalldogg.jpashop.domain.Order;
