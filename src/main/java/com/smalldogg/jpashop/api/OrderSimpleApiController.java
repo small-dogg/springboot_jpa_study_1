@@ -5,7 +5,8 @@ import com.smalldogg.jpashop.domain.Order;
 import com.smalldogg.jpashop.domain.OrderStatus;
 import com.smalldogg.jpashop.repository.OrderRepository;
 import com.smalldogg.jpashop.repository.OrderSearch;
-import com.smalldogg.jpashop.repository.OrderSimpleQueryDto;
+import com.smalldogg.jpashop.repository.order.simplequery.OrderSimpleQueryDto;
+import com.smalldogg.jpashop.repository.order.simplequery.OrderSimpleQueryRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderSimpleApiController {
     private final OrderRepository orderRepository;
+    private final OrderSimpleQueryRepository orderSimpleQueryRepository;
 
     @GetMapping("/api/v1/simple-orders")
     public List<Order> ordersV1() {
@@ -63,10 +65,14 @@ public class OrderSimpleApiController {
                 .collect(Collectors.toList());
     }
 
-    // v3 와의 trade-off
+    // v3 와의 trade-off(v3: 코드 퀄리티, v4: 성능) -> 양자 택일
+    // Repository 재사용성이 떨어짐. 엔티티에 대한 객체 그래프를 탐색하는 등에 이유로 사용되어져야하는 Repository가
+    // API의 스펙이 의존하여 짜여져있다보니, findOrderDtos라는 Repository의 메서드를 다른용도로 활용할 수 있는 방법이 없음.
+    // 논리적인 계층이 깨져있음. Repository로 화면을 의존함. API 스펙이 바뀌면 Repository의 내용을 고쳐야한다는...
+    // v4보다는 v3을 선호.
     @GetMapping("/api/v4/simple-orders")
     public List<OrderSimpleQueryDto> ordersV4() {
-        return orderRepository.findOrderDtos();
+        return orderSimpleQueryRepository.findOrderDtos();
     }
 
 
