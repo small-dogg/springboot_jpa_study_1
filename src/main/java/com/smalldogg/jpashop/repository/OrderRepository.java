@@ -95,6 +95,24 @@ public class OrderRepository {
                 .getResultList();
     }
 
+    //여기서 distinct는 결과 값이 동일한 Row에 대해서 DB에서의 중복제거도 있겠지만,
+    // Entity Manager에서도 보유한 Root Entity 대상의 중복을 제거하여 총 2개의 결과만 반환한다.
+    //이 예제에서는 중복 제거를 하지 않으면, 결과는 4개!
+    //근데... 얘는 절대로 Paging을 처리할 수 없어...ㅠㅠ
+    //[WARN] firstResult/maxResults specified with collection fetch; applying in memory!
+    // 원래 4개짜리 쿼리 결과를 들고와서 중복제거를하고 Paging 처리까지하라고? 그러면 Paging할 대상의 Row는 무엇을 기준으로 해야하는데?
+    // JPA도 미쳐버리는거지... Join으로 뻥튀기가 되어버렸으니깐.. 그래서 메모리에서 해버리겠다는 그런 결정..
+    // OutOfMemoryException 각!🌟🌟
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+
 //    public List<OrderSimpleQueryDto> findOrderDtos() {
 //        return em.createQuery(
 //                "select new com.smalldogg.jpashop.repository.OrderSimpleQueryDto(o.id, m.name, o.orderDate, o.status, d.address)" +
