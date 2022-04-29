@@ -6,10 +6,13 @@ import com.smalldogg.jpashop.domain.OrderItem;
 import com.smalldogg.jpashop.domain.OrderStatus;
 import com.smalldogg.jpashop.repository.OrderRepository;
 import com.smalldogg.jpashop.repository.OrderSearch;
+import com.smalldogg.jpashop.repository.order.query.OrderQueryDto;
+import com.smalldogg.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderApiController {
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     @GetMapping("/api/v1/orders")
     public List<Order> ordersV1() {
@@ -50,6 +54,29 @@ public class OrderApiController {
                 .map(OrderDto::new)
                 .collect(Collectors.toList());
     }
+
+    // Global Batch Size를 작성하였다. 연관관계상에 존재하는 toMany 엔티티들을 자동으로 지연로딩하였다.
+    // hibernate.default_batch_fetch_size는 100~1000 사이의 값을 사용하는 것을 권장하는데,
+    // WAS와 DB가 버틸 수 있다면 높게설정하면되고, 사실 메모리 최적화의 관점을 잘 고려해야함..
+    // in절의 파라미터를 여러개를 한꺼번에 넘겨 여러개의 데이터를 한번에 팍팍 받을 것이냐.
+    // 아니면 나눠서 적당한수준의 양으로 여러번 오래 받을 것이냐
+    // 시간과 부하 간의 트레이드-오프한 부분인 것 같다.. 시스템이 감당할 수 있는 수준을 의사결정하는 것도 결국엔 의사결정자의 몫.
+    // 넌지스레 던지는 말로 대충 500놓고 쓰면 되지 않겠냐... XD
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(@RequestParam(value = "offset", defaultValue = "0") int offset,
+                                        @RequestParam(value = "limit", defaultValue = "100")int limit) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit); // toOne 관계에 걸리는 대상들 fetch join(한방쿼리)으로 해결.
+        return orders.stream()
+                .map(OrderDto::new)
+                .collect(Collectors.toList());
+    }
+
+    //ToOne 관계는 조인해서 바로 해결하고, ToMany 관계는 별도의 메서드를 작성하고, DTO를 만들어서 반환해줌
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        return orderQueryRepository.findOrderQueryDtos();
+    }
+
 
     @Data
     static class OrderDto {

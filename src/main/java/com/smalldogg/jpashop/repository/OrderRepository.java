@@ -4,6 +4,7 @@ import com.smalldogg.jpashop.domain.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -95,6 +96,16 @@ public class OrderRepository {
                 .getResultList();
     }
 
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
     //여기서 distinct는 결과 값이 동일한 Row에 대해서 DB에서의 중복제거도 있겠지만,
     // Entity Manager에서도 보유한 Root Entity 대상의 중복을 제거하여 총 2개의 결과만 반환한다.
     //이 예제에서는 중복 제거를 하지 않으면, 결과는 4개!
@@ -105,11 +116,12 @@ public class OrderRepository {
     // OutOfMemoryException 각!🌟🌟
     public List<Order> findAllWithItem() {
         return em.createQuery(
-                "select distinct o from Order o" +
-                        " join fetch o.member m" +
-                        " join fetch o.delivery d" +
-                        " join fetch o.orderItems oi" +
-                        " join fetch oi.item i", Order.class)
+                        "select distinct o from Order o" +
+                                " join fetch o.member m" + //toOne 관계 (컬럼은 증가할지언정, 로우가 증가하지 않는 대상)
+                                " join fetch o.delivery d" + //toOne 관계 (컬럼은 증가할지언정, 로우가 증가하지 않는 대상)
+                                " join fetch o.orderItems oi" + // toMany 관계 (컬렉션은 지연로딩으로 조회하며, 지연로딩 성능을 최적화한다.)
+                                " join fetch oi.item i" // toMany 관계
+                        , Order.class)
                 .getResultList();
     }
 
