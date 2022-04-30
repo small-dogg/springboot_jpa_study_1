@@ -6,6 +6,8 @@ import com.smalldogg.jpashop.domain.OrderItem;
 import com.smalldogg.jpashop.domain.OrderStatus;
 import com.smalldogg.jpashop.repository.OrderRepository;
 import com.smalldogg.jpashop.repository.OrderSearch;
+import com.smalldogg.jpashop.repository.order.query.OrderFlatDto;
+import com.smalldogg.jpashop.repository.order.query.OrderItemQueryDto;
 import com.smalldogg.jpashop.repository.order.query.OrderQueryDto;
 import com.smalldogg.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
@@ -16,8 +18,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +50,7 @@ public class OrderApiController {
         List<Order> orders = orderRepository.findAllByString(new OrderSearch());
         return orders.stream()
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     @GetMapping("/api/v3/orders")
@@ -52,7 +58,7 @@ public class OrderApiController {
         List<Order> orders = orderRepository.findAllWithItem();
         return orders.stream()
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     // Global Batch Size를 작성하였다. 연관관계상에 존재하는 toMany 엔티티들을 자동으로 지연로딩하였다.
@@ -68,13 +74,36 @@ public class OrderApiController {
         List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit); // toOne 관계에 걸리는 대상들 fetch join(한방쿼리)으로 해결.
         return orders.stream()
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     //ToOne 관계는 조인해서 바로 해결하고, ToMany 관계는 별도의 메서드를 작성하고, DTO를 만들어서 반환해줌
+    //단점은 N+1 문제. 추가 ToMany 관계의 메서드에서 수행하는 쿼리가 실행된다는 점이다.
     @GetMapping("/api/v4/orders")
     public List<OrderQueryDto> ordersV4() {
         return orderQueryRepository.findOrderQueryDtos();
+    }
+
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> ordersV5() {
+        return orderQueryRepository.findAllByDto_optimization();
+    }
+
+    //쿼리를 1번만 날림
+    //중복데이터이 추가되므로 상황에 따라 V5보다 느릴 수있음
+    //애플리케이셔에서 추가 작업이 큼
+    //페이징이 안됨(중복데이터 때문에)
+    @GetMapping("/api/v6/orders")
+    public List<OrderFlatDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+        //개발자가 어떻게든 지지고 볶아가지고, 싹다 조인해서 분해하고 조립하여, 원하는 결과를 생성
+//        return flats.stream()
+//                .collect(groupingBy(o -> new OrderQueryDto(o.getOrderId(),o.getName(),))
+//                mapping(o -> new OrderItemQueryDto(필드맵핑)
+//                )).entrySet().stream()
+//                .map(e -> new OrderQueryDto(필드맵핑)
+//                        .collect(toList()));
+        return new ArrayList<>();
     }
 
 
@@ -96,7 +125,7 @@ public class OrderApiController {
             //Dto 안에 Entity가 존재. Wrapping 조차도 허용할 수 없음. OrderItemDto도 있어야함.
             orderItems = order.getOrderItems().stream()
                     .map(o-> new OrderItemDto(o))
-                    .collect(Collectors.toList());
+                    .collect(toList());
         }
     }
 
